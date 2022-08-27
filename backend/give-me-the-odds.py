@@ -58,8 +58,8 @@ def main():
         arg_parser.error(str(err))
 
     # Read routes from database
-    db = SqliteDB(db_path=millennium_falcon.routes_db)
-    db.connect()
+    db = SqliteDB()
+    db.connect(path=millennium_falcon.routes_db)
     routes = db.get_routes()
 
     # Compute the odd

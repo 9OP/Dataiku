@@ -110,13 +110,14 @@ def compute_odd(encounters: int) -> float:
 
 
 def compute_route_odd(
-    route: MillenniumFalconPlanNode, bounty_hunters_map: BountyHuntersMap
+    plan: MillenniumFalconPlanNode,
+    bounty_hunters_map: BountyHuntersMap,
 ) -> float:
     encounters = 0
-    while route:
-        if route.planet in bounty_hunters_map.get(route.day, []):
+    while plan:
+        if plan.planet in bounty_hunters_map.get(plan.day, []):
             encounters += 1
-        route = route.parent  # type: ignore
+        plan = plan.parent  # type: ignore
     return compute_odd(encounters)
 
 
@@ -136,23 +137,16 @@ def find_best_plan(
     return (odd, route)
 
 
-# def format_plan(
-#     route: MillenniumFalconPlanNode, autonomy
-# ) -> List[MillenniumFalconPlanNode]:
-#     formatted_route = []
-#     while route:
-#         formatted_route.append(
-#             MillenniumFalconPlanNode(
-#                 planet=route.planet,
-#                 day=route.day,
-#                 # Because we compute the path from the end to the start
-#                 # Fuel corresponds to the fuel used, not the fuel available
-#                 fuel=abs(route.fuel - autonomy),
-#                 refill=route.refill,
-#             )
-#         )
-#         route = route.parent  # type: ignore
-#     return formatted_route
+def format_plan(plan: MillenniumFalconPlanNode, autonomy: int):
+    flattened_plan = []
+    while plan:
+        # Because we compute the path from the end to the start
+        # Fuel corresponds to the fuel used, not the fuel available
+        plan.fuel = abs(plan.fuel - autonomy)
+        flattened_plan.append(plan)
+        plan = plan.parent  # type: ignore
+
+    return flattened_plan
 
 
 def give_me_the_odds(

@@ -9,11 +9,8 @@ class Database(ABC):
     con: Any
     db_path: str
 
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-
     @abstractmethod
-    def connect(self):
+    def connect(self, path: str):
         pass
 
     @abstractmethod
@@ -28,8 +25,8 @@ class Database(ABC):
 class SqliteDB(Database):
     con: sqlite3.Connection
 
-    def connect(self):
-        con = sqlite3.connect(self.db_path)
+    def connect(self, path):
+        con = sqlite3.connect(path)
         self.con = con
 
     def disconnect(self):

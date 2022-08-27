@@ -3,13 +3,15 @@ from typing import List, Dict, Union
 from os import path
 
 
-class MillenniumFalconPlanNode(BaseModel):
-    """Represents a Millenium Falcon as a Tree Node"""
-
+class MillenniumFalconPlan(BaseModel):
     planet: str
     day: int
     fuel: int
     refill: bool
+
+
+class MillenniumFalconPlanNode(MillenniumFalconPlan):
+    """Represents a Millenium Falcon as a Tree Node"""
 
     parent: Union["MillenniumFalconPlanNode", None] = None
     children: List["MillenniumFalconPlanNode"] = []

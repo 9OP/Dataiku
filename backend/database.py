@@ -26,7 +26,7 @@ class SqliteDB(Database):
     con: sqlite3.Connection
 
     def connect(self, path):
-        con = sqlite3.connect(path)
+        con = sqlite3.connect(path, check_same_thread=False)
         self.con = con
 
     def disconnect(self):

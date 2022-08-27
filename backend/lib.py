@@ -1,6 +1,7 @@
 from typing import List, Tuple, Optional
 from collections import defaultdict
 from models import (
+    MillenniumFalconPlan,
     MillenniumFalconPlanNode,
     MillenniumFalcon,
     Empire,
@@ -138,12 +139,12 @@ def find_best_plan(
 
 
 def format_plan(plan: MillenniumFalconPlanNode, autonomy: int):
-    flattened_plan = []
+    flattened_plan: List[MillenniumFalconPlan] = []
     while plan:
         # Because we compute the path from the end to the start
         # Fuel corresponds to the fuel used, not the fuel available
         plan.fuel = abs(plan.fuel - autonomy)
-        flattened_plan.append(plan)
+        flattened_plan.append(MillenniumFalconPlan(**plan.dict()))
         plan = plan.parent  # type: ignore
 
     return flattened_plan

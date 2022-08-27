@@ -29,12 +29,12 @@ def get_database() -> Database:
 def get_millennium_falcon() -> MillenniumFalcon:
     file_path = os.environ.get("MILLENNIUM_FALCON_PATH", "")
     if not os.path.isfile(file_path):
-        raise ValueError(f"{file_path} not found!")
+        raise ValueError(f"MillenniumFalcon details: {file_path} not found!")
 
     with open(file_path, "r") as file:
         millennium_falcon_data = json.loads(file.read())
 
-    routes_db_dir = os.path.split("/")[:-1]
+    routes_db_dir = file_path.split("/")[:-1]
     routes_db_path = os.path.join(
         *routes_db_dir, millennium_falcon_data.get("routes_db", "")
     )
@@ -68,6 +68,7 @@ def endpoint_odds(
     millenium_falcon: MillenniumFalcon = Depends(get_millennium_falcon),
 ):
     routes = db.get_routes()
+
     odd, plan = give_me_the_odds(
         millennium_falcon=millenium_falcon,
         empire=empire,
@@ -76,7 +77,7 @@ def endpoint_odds(
     formatted_plan = []
     if plan:
         formatted_plan = format_plan(plan, millenium_falcon.autonomy)
-    return {"odd": odd, plan: formatted_plan}
+    return {"odd": odd, "plan": formatted_plan}
 
 
 # ======================
@@ -118,9 +119,13 @@ def setup_middlewares(app: FastAPI) -> FastAPI:
 # ======================
 # UTILS
 # ======================
-def serve_react_app(app: FastAPI, build_dir: str = "../build"):
+def serve_react_app(app: FastAPI, build_dir: str = "./build"):
     build_path = os.path.join(os.path.dirname(__file__), build_dir)
     static_path = os.path.join(build_path, "static")
+
+    if not os.path.exists(build_path) or not os.path.exists(static_path):
+        print(f"React build not found in {build_dir}")
+        return
 
     app.mount(
         "/static",

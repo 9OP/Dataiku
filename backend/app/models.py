@@ -8,6 +8,7 @@ class MillenniumFalconPlan(BaseModel):
     day: int
     fuel: int
     refill: bool
+    hunted: bool = False
 
 
 class MillenniumFalconPlanNode(MillenniumFalconPlan):

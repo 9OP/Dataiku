@@ -5,9 +5,9 @@ from pydantic import ValidationError
 import json
 
 
-from models import MillenniumFalcon, Empire
-from lib import give_me_the_odds
-from database import SqliteDB
+from app.models import MillenniumFalcon, Empire
+from app.lib import give_me_the_odds
+from app.database import SqliteDB
 
 
 def parser():

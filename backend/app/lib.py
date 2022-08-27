@@ -1,6 +1,8 @@
 from typing import List, Tuple, Optional
 from collections import defaultdict
-from models import (
+
+
+from .models import (
     MillenniumFalconPlan,
     MillenniumFalconPlanNode,
     MillenniumFalcon,
@@ -118,6 +120,7 @@ def compute_route_odd(
     while plan:
         if plan.planet in bounty_hunters_map.get(plan.day, []):
             encounters += 1
+            plan.hunted = True  # warning: side-effect
         plan = plan.parent  # type: ignore
     return compute_odd(encounters)
 
@@ -143,7 +146,7 @@ def format_plan(plan: MillenniumFalconPlanNode, autonomy: int):
     while plan:
         # Because we compute the path from the end to the start
         # Fuel corresponds to the fuel used, not the fuel available
-        plan.fuel = abs(plan.fuel - autonomy)
+        plan.fuel = abs(plan.fuel - autonomy)  # warning: side-effect
         flattened_plan.append(MillenniumFalconPlan(**plan.dict()))
         plan = plan.parent  # type: ignore
 

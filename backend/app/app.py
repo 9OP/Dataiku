@@ -7,9 +7,9 @@ from functools import lru_cache
 import json
 import os
 
-from database import Database, SqliteDB
-from models import MillenniumFalcon, Empire
-from lib import give_me_the_odds, format_plan
+from .database import Database, SqliteDB
+from .models import MillenniumFalcon, Empire
+from .lib import give_me_the_odds, format_plan
 
 description = """Gives the odd to save the Galaxy"""
 title = "Gives me the odd"
@@ -74,9 +74,11 @@ def endpoint_odds(
         empire=empire,
         routes=routes,
     )
+
     formatted_plan = []
     if plan:
         formatted_plan = format_plan(plan, millenium_falcon.autonomy)
+
     return {"odd": odd, "plan": formatted_plan}
 
 

@@ -1,25 +1,30 @@
 #!python3
 from argparse import ArgumentParser
-from os import path
 from pydantic import ValidationError
 import json
+import os
 
 
-from app.models import MillenniumFalcon, Empire
-from app.lib import give_me_the_odds
+from app.lib import (
+    give_me_the_odds,
+    get_empire_from_file,
+    get_millenium_falcon_from_file,
+)
 from app.database import SqliteDB
 
 
-def parser():
-    def is_valid_json_file(parser: ArgumentParser, file_path: str):
-        if not path.isfile(file_path):
-            parser.error(f"\n\tThe file {file_path} does not exist!")
-        try:
-            with open(file_path, "r") as file:
-                return (json.loads(file.read()), file_path)
-        except ValueError:
-            parser.error(f"\n\tThe file {file_path} is not valid JSON!")
+def is_valid_json_file(parser: ArgumentParser, file_path: str):
+    if not os.path.isfile(file_path):
+        parser.error(f"\n\tThe file {file_path} does not exist!")
+    try:
+        with open(file_path, "r") as file:
+            json.loads(file.read())
+            return file_path
+    except ValueError:
+        parser.error(f"\n\tThe file {file_path} is not valid JSON!")
 
+
+def parser():
     parser = ArgumentParser(
         description="Gives the odds that the Millenium Falcon saves the Galaxy"
     )
@@ -35,27 +40,20 @@ def parser():
         metavar="empire",
         type=lambda x: is_valid_json_file(parser, x),
     )
-    return parser
+    return parser.parse_args()
 
 
 def main():
     # Parse CLI arguments
-    arg_parser = parser()
-    parsed = arg_parser.parse_args()
-    falcon_data, falcon_file_path = parsed.falcon
-    empire_data, _ = parsed.empire
-
-    # Generate path to the routes db
-    routes_db_dir = falcon_file_path.split("/")[:-1]
-    routes_db_path = path.join(*routes_db_dir, falcon_data.get("routes_db", ""))
-    falcon_data["routes_db"] = routes_db_path
+    args = parser()
 
     # Validate the file data
     try:
-        millennium_falcon = MillenniumFalcon.parse_obj(falcon_data)
-        empire = Empire.parse_obj(empire_data)
+        millennium_falcon = get_millenium_falcon_from_file(args.falcon)
+        empire = get_empire_from_file(args.empire)
     except ValidationError as err:
-        arg_parser.error(str(err))
+        print(err)
+        return
 
     # Read routes from database
     db = SqliteDB()

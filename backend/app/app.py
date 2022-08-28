@@ -1,15 +1,15 @@
-from fastapi import FastAPI, APIRouter, Request, Depends
+from fastapi import FastAPI, APIRouter, Request, Depends, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException
 from functools import lru_cache
-import json
+from typing import Union
 import os
 
 from .database import Database, SqliteDB
 from .models import MillenniumFalcon, Empire
-from .lib import give_me_the_odds, format_plan
+from .lib import give_me_the_odds, format_plan, get_millenium_falcon_from_file
 
 description = """Gives the odd to save the Galaxy"""
 title = "Gives me the odd"
@@ -27,21 +27,11 @@ def get_database() -> Database:
 
 @lru_cache
 def get_millennium_falcon() -> MillenniumFalcon:
-    file_path = os.environ.get("MILLENNIUM_FALCON_PATH", "")
-    if not os.path.isfile(file_path):
-        raise ValueError(f"MillenniumFalcon details: {file_path} not found!")
-
-    with open(file_path, "r") as file:
-        millennium_falcon_data = json.loads(file.read())
-
-    routes_db_dir = file_path.split("/")[:-1]
-    routes_db_path = os.path.join(
-        *routes_db_dir, millennium_falcon_data.get("routes_db", "")
-    )
-    millennium_falcon_data["routes_db"] = routes_db_path
-    millennium_falcon = MillenniumFalcon.parse_obj(millennium_falcon_data)
-
-    return millennium_falcon
+    try:
+        file_path = os.environ.get("MILLENNIUM_FALCON_PATH", "")
+        return get_millenium_falcon_from_file(file_path)
+    except:
+        raise ServiceUnvailable(detail="Cannot read millenium falcon json file")
 
 
 # ======================
@@ -102,6 +92,28 @@ api_router.add_api_route(
     endpoint=endpoint_odds,
 )
 
+# ======================
+# API ERRORS
+# ======================
+class ServiceUnvailable(HTTPException):
+    def __init__(self, name="Service unvailable", detail=None, **kwargs):
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=detail,
+            **kwargs,
+        )
+        self.name = name
+
+
+def exception_handler(req: Request, exc: Union[HTTPException, Exception]):
+    return JSONResponse(
+        status_code=getattr(exc, "status_code", status.HTTP_500_INTERNAL_SERVER_ERROR),
+        content={
+            "name": getattr(exc, "name", None),
+            "detail": getattr(exc, "detail", str(exc).replace("\n", " ")),
+        },
+    )
+
 
 # ======================
 # MIDDLEWARES
@@ -109,36 +121,20 @@ api_router.add_api_route(
 def setup_middlewares(app: FastAPI) -> FastAPI:
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["http://localhost:8080"],
+        allow_origins=["*"],
         allow_credentials=False,
-        allow_methods={},
+        allow_methods={"GET", "POST"},
         allow_headers={},
     )
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     return app
 
 
-# ======================
-# UTILS
-# ======================
-def serve_react_app(app: FastAPI, build_dir: str = "./build"):
-    build_path = os.path.join(os.path.dirname(__file__), build_dir)
-    static_path = os.path.join(build_path, "static")
-
-    if not os.path.exists(build_path) or not os.path.exists(static_path):
-        print(f"React build not found in {build_dir}")
-        return
-
-    app.mount(
-        "/static",
-        StaticFiles(directory=static_path),
-        name="React App static files",
-    )
-    templates = Jinja2Templates(directory=build_path)
-
-    @app.get("/{full_path:path}")
-    def frontend_build(request: Request, full_path: str):
-        return templates.TemplateResponse("index.html", {"request": request})
+def setup_exception_handlers(app):
+    # Handles app, fastapi, starlette errors
+    app.add_exception_handler(HTTPException, exception_handler)
+    # Handles global errors
+    app.add_exception_handler(Exception, exception_handler)
 
 
 # ======================
@@ -151,14 +147,14 @@ def create_app() -> FastAPI:
         version=version,
     )
     setup_middlewares(app)
+    setup_exception_handlers(app)
 
     app.include_router(api_router)
-    serve_react_app(app)
 
     @app.on_event("startup")
     async def startup():
-        routes_db = get_millennium_falcon().routes_db
-        database.connect(routes_db)
+        millennium_falcon = get_millennium_falcon()
+        database.connect(millennium_falcon.routes_db)
 
     @app.on_event("shutdown")
     async def shutdown():

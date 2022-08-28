@@ -1,5 +1,7 @@
 from typing import List, Tuple, Optional
 from collections import defaultdict
+import json
+import os
 
 
 from .models import (
@@ -12,6 +14,21 @@ from .models import (
     BountyHuntersMap,
     BountyHunters,
 )
+
+
+def get_empire_from_file(file_path: str) -> Empire:
+    with open(file_path, "r") as file:
+        data = json.loads(file.read())
+        return Empire.parse_obj(data)
+
+
+def get_millenium_falcon_from_file(file_path: str) -> MillenniumFalcon:
+    with open(file_path, "r") as file:
+        data = json.loads(file.read())
+        data["routes_db"] = os.path.join(
+            *file_path.split("/")[:-1], data.get("routes_db", "")
+        )
+        return MillenniumFalcon.parse_obj(data)
 
 
 def generate_universe_map(routes: List[Route]) -> UniverseMap:

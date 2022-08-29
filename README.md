@@ -21,7 +21,7 @@ cd backend
 poetry config virtualenvs.in-project true # create .venv/ in current dir
 poetry install
 source $(poetry env info --path)/bin/activate # activate virtual env
-./run.py examples/example1/millennium-falcon.json
+python3 ./run.py examples/example1/millennium-falcon.json
 ```
 
 The server should be running, you can compute the odd with an example `empire.json` file:

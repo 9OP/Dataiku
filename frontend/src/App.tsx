@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo, useState } from "react";
+import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import {
   Box,
   Button,
@@ -17,12 +17,12 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import "./index.css";
-import { useGetMillenniumFalcon, useGetRoutes } from "./services/hooks";
+import { useGetMillenniumFalcon, useGetRoutes, useGiveMeTheOdds } from "./services/hooks";
 import { HiOutlineClock } from "react-icons/hi";
 import { VscChromeClose } from "react-icons/vsc";
 import { IconType } from "react-icons";
 import SpaceChart from "./spaceChart";
-import { BountyHunter } from "./models/models";
+import { BountyHunter, Empire } from "./models/models";
 
 const iconFactory = (icon: IconType) => {
   return (props: IconProps) => {
@@ -33,6 +33,22 @@ const iconFactory = (icon: IconType) => {
 
 const CountdownIcon = iconFactory(HiOutlineClock);
 const CloseIcon = iconFactory(VscChromeClose);
+
+const EmpireIntelContext = createContext<{
+  empire: Empire;
+  setEmpire: React.Dispatch<React.SetStateAction<Empire>>;
+}>(null!);
+
+const EmpireIntelContextProvider = ({ children }: { children: ReactNode }) => {
+  // Used for sharing Empire with EmpireIntel data section and the "Give me the odds" button
+  const defaultEmpire: Empire = { countdown: 0, bountyHunters: [] };
+  const [empire, setEmpire] = useState(defaultEmpire);
+  return (
+    <EmpireIntelContext.Provider value={{ empire, setEmpire }}>
+      {children}
+    </EmpireIntelContext.Provider>
+  );
+};
 
 const DataSection = (props: { title: string; children: ReactNode }) => {
   return (
@@ -110,8 +126,8 @@ const Plan = () => {
 
 const BountyHunterInput = (props: {
   onRemove: () => void;
-  value: BountyHunter;
-  setValue: (hunter: BountyHunter) => void;
+  value: BountyHunter | null;
+  setValue: (hunter: Partial<BountyHunter>) => void;
   planets: string[];
 }) => {
   const { onRemove, setValue, value, planets } = props;
@@ -119,20 +135,20 @@ const BountyHunterInput = (props: {
   const onChangePlanet = (e: React.ChangeEvent<HTMLSelectElement>) => {
     e.preventDefault();
     const planet = e.target.value;
-    setValue({ ...value, planet });
+    setValue({ planet });
   };
 
   const onChangeDay = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
     const day = parseInt(e.target.value);
     if (!isNaN(day)) {
-      setValue({ ...value, day });
+      setValue({ day });
     }
   };
 
   return (
     <HStack spacing="1rem" w="100%">
-      <Select defaultValue={value.planet || "TITLE"} onChange={onChangePlanet}>
+      <Select defaultValue={value?.planet || "TITLE"} onChange={onChangePlanet}>
         <option value="TITLE" disabled>
           Select Planet
         </option>
@@ -142,7 +158,7 @@ const BountyHunterInput = (props: {
           </option>
         ))}
       </Select>
-      <Input type="number" min={0} placeholder="Day" value={value.day} onChange={onChangeDay} />
+      <Input type="number" min={0} placeholder="Day" value={value?.day} onChange={onChangeDay} />
       <IconButton
         aria-label="remove input"
         icon={<CloseIcon />}
@@ -155,11 +171,20 @@ const BountyHunterInput = (props: {
   );
 };
 
-const Empire = () => {
+const EmpireIntel = () => {
   const { data: routes } = useGetRoutes();
+  const { setEmpire } = useContext(EmpireIntelContext);
   const [countdown, setCountdown] = useState(0);
   const [bountyHunterId, setBountyHunterId] = useState(0);
   const [bountyHunters, setBountyHunters] = useState<{ [id: string]: BountyHunter }>({});
+
+  useEffect(() => {
+    // Update the context when local data change
+    setEmpire({
+      countdown,
+      bountyHunters: Object.values(bountyHunters),
+    });
+  }, [countdown, bountyHunters, setEmpire]);
 
   const allPlanets = useMemo(
     () => [
@@ -177,8 +202,8 @@ const Empire = () => {
   };
 
   const setBountyHunter = (id: string) => {
-    return (hunter: BountyHunter) => {
-      setBountyHunters((prev) => ({ ...prev, [id]: hunter }));
+    return (hunter: Partial<BountyHunter>) => {
+      setBountyHunters((prev) => ({ ...prev, [id]: { ...prev[id], ...hunter } }));
     };
   };
 
@@ -191,7 +216,7 @@ const Empire = () => {
     setBountyHunters((prev) => {
       return {
         ...prev,
-        [bountyHunterId]: "",
+        [bountyHunterId]: {},
       };
     });
   };
@@ -244,6 +269,15 @@ const Empire = () => {
 };
 
 const GiveMeTheOddsButton = () => {
+  const { empire } = useContext(EmpireIntelContext);
+  const { mutateAsync: giveMeTheOdds } = useGiveMeTheOdds();
+
+  const onClick = async () => {
+    const data = await giveMeTheOdds({ empire });
+    // console.log(data);
+    alert(JSON.stringify(data, null, 4));
+  };
+
   return (
     <Button
       size="lg"
@@ -256,6 +290,7 @@ const GiveMeTheOddsButton = () => {
       _hover={{ bg: "transparent", color: "yellow" }}
       _active={{ boxShadow: "md", opacity: 0.7 }}
       color="gray.700"
+      onClick={onClick}
     >
       <Text
         marginX="2rem"
@@ -277,19 +312,21 @@ function App() {
         <Image src="/never_tell_me_the_odds.gif" borderRadius="6px" boxShadow="lg" margin="auto" />
       </Box>
 
-      <Box
-        display="grid"
-        gridGap="3rem"
-        gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
-        marginTop="4rem"
-      >
-        <Plan />
-        <Empire />
-      </Box>
+      <EmpireIntelContextProvider>
+        <Box
+          display="grid"
+          gridGap="3rem"
+          gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
+          marginTop="4rem"
+        >
+          <Plan />
+          <EmpireIntel />
+        </Box>
 
-      <Flex w="100%" justifyContent="center" marginTop="2rem">
-        <GiveMeTheOddsButton />
-      </Flex>
+        <Flex w="100%" justifyContent="center" marginTop="2rem">
+          <GiveMeTheOddsButton />
+        </Flex>
+      </EmpireIntelContextProvider>
     </Box>
   );
 }

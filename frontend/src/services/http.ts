@@ -41,7 +41,10 @@ export const getRoutes = async () => {
 export const postEmpire = async (empire: Empire) => {
   const res = await fetch("/api/odds", {
     method: "POST",
-    body: JSON.stringify(empire),
+    body: JSON.stringify({
+      countdown: empire.countdown,
+      bounty_hunters: empire.bountyHunters,
+    }),
     headers: { "Content-Type": "application/json" },
   });
   const json = await res.json();

@@ -52,10 +52,13 @@ def generate_plans_recursive(
     end: str,
     autonomy: int,
 ) -> List[MillenniumFalconPlanNode]:
+    # We dont wait on the arrival planet
     if node.planet == end:
         node.parent = None
 
-    if node.planet == start:
+    # A valid path is found when
+    # current node is departure planet on day 0
+    if node.planet == start and node.day == 0:
         return [node]
 
     previous_nodes = universe_map.get(node.planet, [])

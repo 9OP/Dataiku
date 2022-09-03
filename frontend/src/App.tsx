@@ -126,7 +126,7 @@ const Plan = () => {
 
 const BountyHunterInput = (props: {
   onRemove: () => void;
-  value: BountyHunter | null;
+  value: BountyHunter;
   setValue: (hunter: Partial<BountyHunter>) => void;
   planets: string[];
 }) => {
@@ -216,7 +216,7 @@ const EmpireIntel = () => {
     setBountyHunters((prev) => {
       return {
         ...prev,
-        [bountyHunterId]: {},
+        [bountyHunterId]: { day: 0, planet: "" },
       };
     });
   };

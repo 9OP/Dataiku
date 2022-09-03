@@ -1,4 +1,4 @@
-import { MillenniumFalcon, PlanStep, Route } from "../models/models";
+import { Empire, MillenniumFalcon, PlanStep, Route } from "../models/models";
 
 const jsonToMillenniumFalcon = (json: any): MillenniumFalcon => ({
   autonomy: json.autonomy,
@@ -38,9 +38,10 @@ export const getRoutes = async () => {
   return jsonToRoutes(json);
 };
 
-export const postEmpire = async () => {
+export const postEmpire = async (empire: Empire) => {
   const res = await fetch("/api/odds", {
     method: "POST",
+    body: JSON.stringify(empire),
     headers: { "Content-Type": "application/json" },
   });
   const json = await res.json();

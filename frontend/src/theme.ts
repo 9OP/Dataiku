@@ -9,7 +9,7 @@ const theme = extendTheme({
       body: {
         height: "100vh",
         width: "100%",
-        overflow: "hidden",
+        //overflow: "hidden",
         margin: 0,
         color: "white",
         backgroundColor: "gray.700",

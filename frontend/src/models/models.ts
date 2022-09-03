@@ -5,7 +5,7 @@ export interface MillenniumFalcon {
 }
 
 export interface Route {
-  origine: string;
+  origin: string;
   destination: string;
   travel_time: number;
 }

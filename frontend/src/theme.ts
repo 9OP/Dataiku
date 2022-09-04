@@ -1,9 +1,6 @@
 import { extendTheme } from "@chakra-ui/react";
 
 const theme = extendTheme({
-  fonts: {
-    heading: `STARWARS, sans-serif`,
-  },
   styles: {
     global: {
       body: {

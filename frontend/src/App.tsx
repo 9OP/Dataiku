@@ -1,4 +1,12 @@
-import React, { createContext, ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Box,
   Button,
@@ -12,6 +20,7 @@ import {
   InputGroup,
   InputLeftElement,
   Select,
+  Stack,
   Text,
   useStyleConfig,
   VStack,
@@ -20,6 +29,8 @@ import "./index.css";
 import { useGetMillenniumFalcon, useGetRoutes, useGiveMeTheOdds } from "./services/hooks";
 import { HiOutlineClock } from "react-icons/hi";
 import { VscChromeClose } from "react-icons/vsc";
+import { BsFillLightningChargeFill } from "react-icons/bs";
+import { FaLongArrowAltRight } from "react-icons/fa";
 import { IconType } from "react-icons";
 import SpaceChart from "./spaceChart";
 import { BountyHunter, Empire } from "./models/models";
@@ -33,6 +44,8 @@ const iconFactory = (icon: IconType) => {
 
 const CountdownIcon = iconFactory(HiOutlineClock);
 const CloseIcon = iconFactory(VscChromeClose);
+const AutonomyIcon = iconFactory(BsFillLightningChargeFill);
+const RightArrowIcon = iconFactory(FaLongArrowAltRight);
 
 const EmpireIntelContext = createContext<{
   empire: Empire;
@@ -48,6 +61,33 @@ const EmpireIntelContextProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </EmpireIntelContext.Provider>
   );
+};
+
+const useContainerDimensions = <T extends HTMLElement>(ref: React.MutableRefObject<T>) => {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const getDimensions = () => ({
+      width: ref.current.offsetWidth,
+      height: ref.current.offsetHeight,
+    });
+
+    const handleResize = () => {
+      setDimensions(getDimensions());
+    };
+
+    if (ref.current) {
+      setDimensions(getDimensions());
+    }
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [ref]);
+
+  return dimensions;
 };
 
 const DataSection = (props: { title: string; children: ReactNode }) => {
@@ -81,6 +121,10 @@ const DataSection = (props: { title: string; children: ReactNode }) => {
 };
 
 const Plan = () => {
+  // Container dimensions are used to center the space chart in the parent Box
+  const ref = useRef<HTMLDivElement>(null!);
+  const { width, height } = useContainerDimensions(ref);
+
   const { data: millenniumFalcon } = useGetMillenniumFalcon();
   const { data: routes } = useGetRoutes();
 
@@ -92,18 +136,20 @@ const Plan = () => {
       borderBottomWidth="3px"
       borderColor="yellow"
     >
-      <HStack fontFamily="STARWARS" fontWeight="medium" fontSize="xl" color="yellow" spacing="1rem">
-        <Text>Aut: </Text>
+      <HStack fontFamily="STARWARS" fontWeight="medium" fontSize="xl" color="yellow" spacing="0">
         <Text>{millenniumFalcon?.autonomy}</Text>
+        <AutonomyIcon />
       </HStack>
 
-      <HStack fontFamily="STARWARS" fontWeight="medium" fontSize="xl" color="yellow" spacing="1rem">
-        <Text>Dpt: </Text>
+      <HStack
+        fontFamily="STARWARS"
+        fontWeight="medium"
+        fontSize="xl"
+        color="yellow"
+        spacing="0.5rem"
+      >
         <Text>{millenniumFalcon?.departure}</Text>
-      </HStack>
-
-      <HStack fontFamily="STARWARS" fontWeight="medium" fontSize="xl" color="yellow" spacing="1rem">
-        <Text>Arr: </Text>
+        <RightArrowIcon />
         <Text>{millenniumFalcon?.arrival}</Text>
       </HStack>
     </HStack>
@@ -112,13 +158,13 @@ const Plan = () => {
   return (
     <DataSection title="Plan">
       <Flex direction={{ base: "column", xl: "row" }}>
-        <Box borderRightWidth="3px" borderColor="yellow">
+        <Box borderRightWidth={{ base: "0", xl: "3px" }} borderColor="yellow">
           <Data />
-          <Box>
-            <SpaceChart routes={routes || []} />
+          <Box ref={ref}>
+            <SpaceChart routes={routes || []} dimension={{ width, height }} />
           </Box>
         </Box>
-        <Box>plan</Box>
+        <Box padding="1rem">plan</Box>
       </Flex>
     </DataSection>
   );
@@ -148,7 +194,7 @@ const BountyHunterInput = (props: {
 
   return (
     <HStack spacing="1rem" w="100%">
-      <Select defaultValue={value?.planet || "TITLE"} onChange={onChangePlanet}>
+      <Select defaultValue={value?.planet || "TITLE"} onChange={onChangePlanet} w="75%">
         <option value="TITLE" disabled>
           Select Planet
         </option>
@@ -158,13 +204,21 @@ const BountyHunterInput = (props: {
           </option>
         ))}
       </Select>
-      <Input type="number" min={0} placeholder="Day" value={value?.day} onChange={onChangeDay} />
+      <Input
+        type="number"
+        min={0}
+        placeholder="Day"
+        value={value?.day}
+        onChange={onChangeDay}
+        w="25%"
+      />
       <IconButton
         aria-label="remove input"
         icon={<CloseIcon />}
         size="md"
         variant="solid"
         colorScheme="yellow"
+        bg="yellow"
         onClick={onRemove}
       ></IconButton>
     </HStack>
@@ -224,8 +278,19 @@ const EmpireIntel = () => {
   return (
     <DataSection title="Empire intel">
       <VStack spacing="0" w="100%" justifyContent="space-between" alignItems="left">
-        <HStack padding="1rem" borderBottomWidth="3px" borderColor="yellow">
-          <Text fontWeight="bold" color="yellow" fontFamily="STARWARS" fontSize="lg" w="15rem">
+        <Stack
+          direction={{ base: "column", md: "row" }}
+          padding="1rem"
+          borderBottomWidth="3px"
+          borderColor="yellow"
+        >
+          <Text
+            fontWeight="bold"
+            color="yellow"
+            fontFamily="STARWARS"
+            fontSize="lg"
+            width={{ base: "100%", md: "15rem" }}
+          >
             Countdown
           </Text>
           <InputGroup>
@@ -238,12 +303,24 @@ const EmpireIntel = () => {
               onChange={onChangeCountdown}
             />
           </InputGroup>
-        </HStack>
-        <HStack padding="1rem" w="100%">
-          <Text fontWeight="bold" color="yellow" fontFamily="STARWARS" fontSize="lg" w="15rem">
+        </Stack>
+
+        <Stack
+          direction={{ base: "column", md: "row" }}
+          padding="1rem"
+          w="100%"
+          justifyContent="space-between"
+        >
+          <Text
+            fontWeight="bold"
+            color="yellow"
+            fontFamily="STARWARS"
+            fontSize="lg"
+            width={{ base: "100%", md: "15rem" }}
+          >
             Bounty hunters
           </Text>
-          <VStack alignItems="flex-start" width="100%">
+          <VStack alignItems="flex-start" width="100%" justifyContent="space-between">
             {Object.keys(bountyHunters).map((id) => (
               <BountyHunterInput
                 key={id}
@@ -257,12 +334,15 @@ const EmpireIntel = () => {
               size="md"
               variant="solid"
               colorScheme="yellow"
+              bg="yellow"
+              fontFamily="STARWARS"
+              fontWeight="thin"
               onClick={() => addNewBountyHunter()}
             >
               New bounty hunter
             </Button>
           </VStack>
-        </HStack>
+        </Stack>
       </VStack>
     </DataSection>
   );
@@ -291,6 +371,7 @@ const GiveMeTheOddsButton = () => {
       _active={{ boxShadow: "md", opacity: 0.7 }}
       color="gray.700"
       onClick={onClick}
+      whiteSpace="normal"
     >
       <Text
         marginX="2rem"
@@ -298,6 +379,7 @@ const GiveMeTheOddsButton = () => {
         transform="skew(-30deg)"
         textTransform="uppercase"
         fontFamily="STARWARS"
+        textAlign="center"
       >
         Give me the odds !
       </Text>
@@ -307,7 +389,7 @@ const GiveMeTheOddsButton = () => {
 
 function App() {
   return (
-    <Box margin="3rem">
+    <Box margin={{ base: "1rem", md: "3rem" }}>
       <Box w="100%">
         <Image src="/never_tell_me_the_odds.gif" borderRadius="6px" boxShadow="lg" margin="auto" />
       </Box>

@@ -55,7 +55,7 @@ The server should be up and running. You can now [Test with cURL](##curl).
 
 ## Test with cURL <a name="curl"></a>
 
-When the server is running (either locally or via Docker), you can compute the odd with an example `empire.json` file:
+When the server is running (either locally or via Docker), you can compute the odd with an example `empire.json` file, from the backend directory:
 
 ```sh
 curl -i -X POST http://localhost:8080/api/odds \
@@ -89,6 +89,7 @@ You can run the test suite either on local or on Docker. The command is:
 
 ```sh
 cd backend # Move to the backend directory
+source $(poetry env info --path)/bin/activate # Activate venv
 python -m unittest discover -s tests -v # Run the tests within ./tests/ directory
 ```
 
@@ -106,6 +107,8 @@ It still requires python deps to be installed (because it relies on Pydantic for
 You can run the CLI either on local or on Docker. The command is:
 
 ```sh
+cd backend # Move to the backend directory
+source $(poetry env info --path)/bin/activate # Activate venv
 ./give_me_the_odds.py examples/example1/millennium-falcon.json examples/example1/empire.json
 ```
 
@@ -158,10 +161,9 @@ It works the following:
 <br />
 <br />
 
-At the end, the recursion algorithm `generate_plans_recursive` returns a list of `MillenniumFalconPlanNode` that we can traverse through the `parent` field, to retrieve all possible
-routes for the MillenniumFalcon given: `departure, arrival, routes, countdown`.
+At the end, the recursion algorithm `generate_plans_recursive` returns a list of `MillenniumFalconPlanNode` that we can traverse through the `parent` field.
 <br />
-Then we only need to iterate through all the possible routes and get the one with maximum odd in `find_best_plan`, that has the least number of encounters with the bounty hunters.
+Then we only need to iterate through all the possible routes and get the one with maximum odd in `find_best_plan`.
 
 
 <br />
@@ -169,4 +171,5 @@ Then we only need to iterate through all the possible routes and get the one wit
 
 (As a side note, the algorithm can be further optimized. The current implementation is dependant on the countdown value.
 We could update the implementation to not depend on the countdown value and "extend" existing routes if the starting node
-is not at day 0.)
+is not at day 0. For instance instead of generating all the possible routes, simply generate the routes with arrival at day=countdown. 
+Then extend the route if the starting node does not start at day 0. We can discuss this part in the debrief)

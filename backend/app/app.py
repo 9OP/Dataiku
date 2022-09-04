@@ -95,6 +95,8 @@ api_router.add_api_route(
 # ======================
 # API ERRORS
 # ======================
+
+
 class ServiceUnvailable(HTTPException):
     def __init__(self, name="Service unvailable", detail=None, **kwargs):
         super().__init__(

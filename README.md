@@ -1,12 +1,12 @@
 # Give me the odds
 
 1. [Server](#server)
-   1. [Run locally](##local)
-   2. [Run on Docker](##docker)
-   3. [Test with cURL](##curl)
+   1. [Run locally](#ocal)
+   2. [Run on Docker](#docker)
+   3. [Test with cURL](#curl)
 2. [CLI](#cli)
-3. [Web application](##web)
-4. [Algorithm](##algorithm)
+3. [Web application](#web)
+4. [Algorithm](#algorithm)
 
 <br />
 <br />
@@ -94,7 +94,7 @@ You can run the CLI either on local or on Docker. The command is:
 ./give_me_the_odds.py examples/example1/millennium-falcon.json examples/example1/empire.json
 ```
 
-I could have made the CLI using only Python standard lib, but it would have been more complicated with data modelling and validation. 
+I could have made the CLI using only Python standard lib, but it would have been more complicated with data modelling and validation.
 So the tradeoff was to have python deps installed also for the CLI.
 
 <br />

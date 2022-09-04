@@ -1,4 +1,4 @@
-import { Empire, MillenniumFalcon, PlanStep, Route } from "../models/models";
+import { Empire, MillenniumFalcon, Plan, PlanStep, Route } from "../models/models";
 
 const jsonToMillenniumFalcon = (json: any): MillenniumFalcon => ({
   autonomy: json.autonomy,
@@ -14,16 +14,18 @@ const jsonToRoutes = (json: any): Route[] => {
   }));
 };
 
-const jsonToPlan = (json: any) => {
+const jsonToPlan = (json: any): Plan => {
   const odd: number = json.odd;
-  const plan: PlanStep[] = (json.plan || []).map((data: any) => ({
-    day: data.day,
-    planet: data.planet,
-    fuel: data.fuel,
-    refill: data.refill,
-    hunter: data.hunted,
-  }));
-  return { odd, plan };
+  const steps: PlanStep[] = (json.plan || []).map(
+    (data: any): PlanStep => ({
+      day: data.day,
+      planet: data.planet,
+      fuel: data.fuel,
+      refill: data.refill,
+      hunted: data.hunted,
+    })
+  );
+  return { odd, steps };
 };
 
 export const getMillenniumFalcon = async () => {

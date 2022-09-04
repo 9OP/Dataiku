@@ -10,6 +10,11 @@ export interface Route {
   travel_time: number;
 }
 
+export interface Plan {
+  odd: number;
+  steps: PlanStep[];
+}
+
 export interface PlanStep {
   day: number;
   planet: string;

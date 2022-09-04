@@ -19,8 +19,12 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  ListItem,
+  OrderedList,
   Select,
+  Spinner,
   Stack,
+  Tag,
   Text,
   useStyleConfig,
   VStack,
@@ -33,7 +37,7 @@ import { BsFillLightningChargeFill } from "react-icons/bs";
 import { FaLongArrowAltRight } from "react-icons/fa";
 import { IconType } from "react-icons";
 import SpaceChart from "./spaceChart";
-import { BountyHunter, Empire } from "./models/models";
+import { BountyHunter, Empire, Plan, PlanStep } from "./models/models";
 
 const iconFactory = (icon: IconType) => {
   return (props: IconProps) => {
@@ -47,19 +51,24 @@ const CloseIcon = iconFactory(VscChromeClose);
 const AutonomyIcon = iconFactory(BsFillLightningChargeFill);
 const RightArrowIcon = iconFactory(FaLongArrowAltRight);
 
-const EmpireIntelContext = createContext<{
+const AppContext = createContext<{
   empire: Empire;
   setEmpire: React.Dispatch<React.SetStateAction<Empire>>;
+  plan: Plan;
+  setPlan: React.Dispatch<React.SetStateAction<Plan>>;
 }>(null!);
 
-const EmpireIntelContextProvider = ({ children }: { children: ReactNode }) => {
-  // Used for sharing Empire with EmpireIntel data section and the "Give me the odds" button
+const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const defaultEmpire: Empire = { countdown: 0, bountyHunters: [] };
+  const defaultPlan: Plan = { odd: 0, steps: [] };
+
   const [empire, setEmpire] = useState(defaultEmpire);
+  const [plan, setPlan] = useState(defaultPlan);
+
   return (
-    <EmpireIntelContext.Provider value={{ empire, setEmpire }}>
+    <AppContext.Provider value={{ empire, setEmpire, plan, setPlan }}>
       {children}
-    </EmpireIntelContext.Provider>
+    </AppContext.Provider>
   );
 };
 
@@ -120,10 +129,12 @@ const DataSection = (props: { title: string; children: ReactNode }) => {
   );
 };
 
-const Plan = () => {
+const PlanSection = () => {
   // Container dimensions are used to center the space chart in the parent Box
   const ref = useRef<HTMLDivElement>(null!);
   const { width, height } = useContainerDimensions(ref);
+
+  const { plan } = useContext(AppContext);
 
   const { data: millenniumFalcon } = useGetMillenniumFalcon();
   const { data: routes } = useGetRoutes();
@@ -155,16 +166,50 @@ const Plan = () => {
     </HStack>
   );
 
+  const Step = ({ step }: { step: PlanStep }) => (
+    <VStack color="yellow" fontFamily="mono" alignItems="flex-start">
+      <Text>
+        Planet: {step.planet} / Day: {step.day} / Fuel: {step.fuel}
+      </Text>
+      <HStack>
+        {step.refill && <Tag colorScheme="yellow">Refuel</Tag>}
+        {step.hunted && <Tag colorScheme="red">Hunter</Tag>}
+      </HStack>
+    </VStack>
+  );
+
   return (
     <DataSection title="Plan">
       <Flex direction={{ base: "column", xl: "row" }}>
-        <Box borderRightWidth={{ base: "0", xl: "3px" }} borderColor="yellow">
+        <Flex
+          flexDirection="column"
+          borderRightWidth={{ base: "0", xl: "3px" }}
+          borderColor="yellow"
+          flexGrow="1"
+          width={{ base: "100%", xl: "50%" }}
+        >
           <Data />
-          <Box ref={ref}>
+          <Flex ref={ref} flexGrow="1">
             <SpaceChart routes={routes || []} dimension={{ width, height }} />
-          </Box>
+          </Flex>
+        </Flex>
+        <Box
+          padding="1rem"
+          borderTopWidth={{ base: "3px", xl: "0" }}
+          borderColor="yellow"
+          width={{ base: "100%", xl: "50%" }}
+        >
+          <Text fontFamily="mono" color="yellow" fontSize="xl">
+            Odd: {plan.odd}%
+          </Text>
+          <OrderedList spacing="0.2rem" color="yellow">
+            {plan.steps.map((step, i) => (
+              <ListItem key={i}>
+                <Step step={step} />
+              </ListItem>
+            ))}
+          </OrderedList>
         </Box>
-        <Box padding="1rem">plan</Box>
       </Flex>
     </DataSection>
   );
@@ -225,9 +270,9 @@ const BountyHunterInput = (props: {
   );
 };
 
-const EmpireIntel = () => {
+const EmpireIntelSection = () => {
   const { data: routes } = useGetRoutes();
-  const { setEmpire } = useContext(EmpireIntelContext);
+  const { setEmpire } = useContext(AppContext);
   const [countdown, setCountdown] = useState(0);
   const [bountyHunterId, setBountyHunterId] = useState(0);
   const [bountyHunters, setBountyHunters] = useState<{ [id: string]: BountyHunter }>({});
@@ -349,13 +394,12 @@ const EmpireIntel = () => {
 };
 
 const GiveMeTheOddsButton = () => {
-  const { empire } = useContext(EmpireIntelContext);
-  const { mutateAsync: giveMeTheOdds } = useGiveMeTheOdds();
+  const { empire, setPlan } = useContext(AppContext);
+  const { mutateAsync: giveMeTheOdds, isLoading } = useGiveMeTheOdds();
 
   const onClick = async () => {
-    const data = await giveMeTheOdds({ empire });
-    // console.log(data);
-    alert(JSON.stringify(data, null, 4));
+    const plan = await giveMeTheOdds({ empire });
+    setPlan(plan);
   };
 
   return (
@@ -372,17 +416,29 @@ const GiveMeTheOddsButton = () => {
       color="gray.700"
       onClick={onClick}
       whiteSpace="normal"
+      alignItems="center"
     >
-      <Text
-        marginX="2rem"
-        fontSize="4xl"
-        transform="skew(-30deg)"
-        textTransform="uppercase"
-        fontFamily="STARWARS"
-        textAlign="center"
-      >
-        Give me the odds !
-      </Text>
+      {isLoading ? (
+        <Spinner
+          marginX="1rem"
+          thickness="4px"
+          speed="0.65s"
+          emptyColor="yellow"
+          color="black"
+          size="xl"
+        />
+      ) : (
+        <Text
+          marginX="2rem"
+          fontSize="4xl"
+          transform="skew(-30deg)"
+          textTransform="uppercase"
+          fontFamily="STARWARS"
+          textAlign="center"
+        >
+          Give me the odds !
+        </Text>
+      )}
     </Button>
   );
 };
@@ -394,21 +450,21 @@ function App() {
         <Image src="/never_tell_me_the_odds.gif" borderRadius="6px" boxShadow="lg" margin="auto" />
       </Box>
 
-      <EmpireIntelContextProvider>
+      <AppContextProvider>
         <Box
           display="grid"
-          gridGap="3rem"
+          gridGap="2rem"
           gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }}
           marginTop="4rem"
         >
-          <Plan />
-          <EmpireIntel />
+          <PlanSection />
+          <EmpireIntelSection />
         </Box>
 
         <Flex w="100%" justifyContent="center" marginTop="2rem">
           <GiveMeTheOddsButton />
         </Flex>
-      </EmpireIntelContextProvider>
+      </AppContextProvider>
     </Box>
   );
 }

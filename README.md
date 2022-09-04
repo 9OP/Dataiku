@@ -162,3 +162,11 @@ At the end, the recursion algorithm `generate_plans_recursive` returns a list of
 routes for the MillenniumFalcon given: `departure, arrival, routes, countdown`.
 <br />
 Then we only need to iterate through all the possible routes and get the one with maximum odd in `find_best_plan`, that has the least number of encounters with the bounty hunters.
+
+
+<br />
+<br />
+
+(As a side note, the algorithm can be further optimized. The current implementation is dependant on the countdown value.
+We could update the implementation to not depend on the countdown value and "extend" existing routes if the starting node
+is not at day 0.)

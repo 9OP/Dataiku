@@ -1,52 +1,45 @@
 # Give me the odds
 
-There are 2 ways of running the backend:
+1. [Server](#server)
+   1. [Run locally](##local)
+   2. [Run on Docker](##docker)
+   3. [Test with cURL](##curl)
+2. [CLI](#cli)
+3. [Web application](##web)
+4. [Algorithm](##algorithm)
 
-- locally by installing deps in a python virtual env (using poetry)
-- docker by building the image and starting a container
+<br />
+<br />
 
-## Run locally
+# Server <a name="server"></a>
 
-You will need:
+The server is written in Python 3.9 with FastAPI and served with Uvicorn.
+There is no particular reason to choose an async framework over a sync one for this exercise,
+I am just more familiar with FastAPI than with Flask at this moment.
 
-- Python >=3.9 and Poetry for the backend
-- Npm for the frontend
+The server can either be started via a virtual env (using Poetry) or via a docker container.
 
-### Backend
+## Run locally <a name="local"></a>
 
-Install and start the server:
+Local install require Python 3.9 and Poetry installed.
 
 ```sh
-cd backend
-poetry config virtualenvs.in-project true # create .venv/ in current dir
-poetry install
+cd backend # Move to the backend/server directory
+poetry config virtualenvs.in-project true # Set config: create .venv/ in current dir
+poetry install # Install deps
 source $(poetry env info --path)/bin/activate # activate virtual env
-python3 ./run.py examples/example1/millennium-falcon.json
+python3 ./run.py examples/example1/millennium-falcon.json # Start the server with MillenniumFalcon JSON file
 ```
 
-The server should be running, you can compute the odd with an example `empire.json` file:
+The server should be up and running. You can now [Test with cURL](##curl).
+
+## .. or Run on Docker <a name="docker"></a>
+
+Docker install requires... Docker.
 
 ```sh
-curl -i -X POST http://localhost:8080/api/odds \
-   -H 'Content-Type: application/json' \
-   -d @examples/example1/empire.json
-```
-
-### CLI
-
-Once the backend is installed:
-
-```sh
-./give_me_the_odds.py examples/example1/millennium-falcon.json examples/example1/empire.json
-```
-
-## Run on Docker
-
-Install and start the server
-
-```sh
-cd backend
-docker build . -t millennium_falcon --target prod # Build prod image
+cd backend  # Move to the backend/server directory
+docker build . -t millennium_falcon --target prod # Build production image
 docker run \
  --rm \
  -it \
@@ -54,4 +47,103 @@ docker run \
  -v $(pwd):/app \
  millennium_falcon \
  python3 ./run.py examples/example1/millennium-falcon.json
+# Start the server with MillenniumFalcon JSON file
 ```
+
+The server should be up and running. You can now [Test with cURL](##curl).
+
+## Test with cURL <a name="curl"></a>
+
+When the server is running (either locally or via Docker), you can compute the odd with an example `empire.json` file:
+
+```sh
+curl -i -X POST http://localhost:8080/api/odds \
+   -H 'Content-Type: application/json' \
+   -d @examples/example1/empire.json
+```
+
+The API call return a JSON object containin the odd of success `(0<odd<100)` with the route the MillenniumFalcon should follow.
+
+```
+HTTP/1.1 200 OK
+date: Sun, 04 Sep 2022 15:38:43 GMT
+server: uvicorn
+content-length: 283
+content-type: application/json
+
+{"odd":81.0,"plan":[
+   {"planet":"Tatooine","day":0,"fuel":6,"refill":false,"hunted":false},
+   {"planet":"Hoth","day":6,"fuel":0,"refill":true,"hunted":true},
+   {"planet":"Hoth","day":7,"fuel":1,"refill":false,"hunted":true},
+   {"planet":"Endor","day":8,"fuel":0,"refill":false,"hunted":false}
+]}
+```
+
+
+<br />
+<br />
+
+# CLI <a name="cli"></a>
+
+A CLI is also available if you dont want to run the server.
+It still requires python deps to be installed (because it relies on Pydantic for data modelling and validation).
+
+You can run the CLI either on local or on Docker. The command is:
+
+```sh
+./give_me_the_odds.py examples/example1/millennium-falcon.json examples/example1/empire.json
+```
+
+I could have made the CLI using only Python standard lib, but it would have been more complicated with data modelling and validation. 
+So the tradeoff was to have python deps installed also for the CLI.
+
+<br />
+<br />
+
+# Web application <a name="web"></a>
+
+The web application is built with CreateReactApp, React, Typescript, ChakraUI and ReactQuery.
+
+Once the server is started (it should run on `0.0.0.0:8080`, but you can edit the `proxy` in `package.json` if necessary).
+You should be able to start the web application on WebpackDevServer with:
+
+```sh
+cd frontend # Mode to frontend/web app directory
+pnpm install # Install deps, you can use yarn or just npm
+npm run start # Start the web server and serve the react app
+```
+
+You should visit [`http://localhost:8080`](http://localhost:8080) and start playing with the app.
+
+![screenshot](screenshot.png)
+
+
+<br />
+<br />
+
+# Algorithm <a name="algorithm"></a>
+
+The algorithm is contained in the file `backend/app/lib.py:give_me_the_odds`.
+<br />
+<br />
+It is based on a DFS recursing traversal from the arrival planet.
+
+
+It has 2 main steps:
+- Compute all the valid routes for the MillenniumFalcon to reach the `arrival` planet before the end of the `countdown`.
+- From those valid routes, compute the route that minimizes the number of encounters with the bounty hunters.
+
+<br />
+
+It works the following:
+- Recursively from the a `MillenniumFalconPlanNode`  get the possible states (planet, min autonomy and max days elapsed before countdown) from where the MillenniumFalcon could have been.
+- Append the valids (ie. countdown not elapsed and fuel quantity <= autonomy) previous state to a list
+- When the current state planet is the departure planet at day 0, then return from the recursion
+
+<br />
+<br />
+
+At the end, the recursion algorithm `generate_plans_recursive` returns a list of `MillenniumFalconPlanNode` that we can traverse through the `parent` field, to retrieve all possible
+routes for the MillenniumFalcon given: `departure, arrival, routes, countdown`.
+<br />
+Then we only need to iterate through all the possible routes and get the one with maximum odd in `find_best_plan`, that has the least number of encounters with the bounty hunters.

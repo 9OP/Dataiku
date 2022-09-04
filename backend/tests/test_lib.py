@@ -121,7 +121,7 @@ class TestLib(unittest.TestCase):
             end=end,
             autonomy=autonomy,
         )
-        self.assertEquals(len(routes), 4)
+        self.assertEqual(len(routes), 4)
 
     def test_find_best_plan(self):
         end = "Hoth"

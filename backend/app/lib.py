@@ -26,7 +26,8 @@ def get_millenium_falcon_from_file(file_path: str) -> MillenniumFalcon:
     with open(file_path, "r") as file:
         data = json.loads(file.read())
         data["routes_db"] = os.path.join(
-            *file_path.split("/")[:-1], data.get("routes_db", "")
+            "/".join(file_path.split("/")[:-1]),
+            data.get("routes_db", ""),
         )
         return MillenniumFalcon.parse_obj(data)
 

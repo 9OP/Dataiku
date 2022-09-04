@@ -143,6 +143,7 @@ def setup_exception_handlers(app):
 # APP FACTORY
 # ======================
 def create_app() -> FastAPI:
+
     app = FastAPI(
         title=title,
         description=description,

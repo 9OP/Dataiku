@@ -4,6 +4,7 @@
    1. [Run locally](#ocal)
    2. [Run on Docker](#docker)
    3. [Test with cURL](#curl)
+   4. [Run automated tests](#tests)
 2. [CLI](#cli)
 3. [Web application](#web)
 4. [Algorithm](#algorithm)
@@ -78,6 +79,17 @@ content-type: application/json
    {"planet":"Endor","day":8,"fuel":0,"refill":false,"hunted":false}
 ]}
 ```
+
+## Run automated tests <a name="tests"></a>
+
+The server is tested with Python standard lib's Unittest package. Run the test suite with:
+
+```sh
+cd backend # Move to the backend directory
+python -m unittest discover -s tests -v # Run the tests within ./tests/ directory
+```
+
+I usually test with Pytest (because the fixture design and architecture is more convenient), but Unittest is good enough and standard for this project.
 
 
 <br />

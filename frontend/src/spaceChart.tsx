@@ -44,8 +44,6 @@ const SpaceChart = (props: SpaceChartProps) => {
     // Clear svg content before adding new elements
     svg.selectAll("*").remove();
 
-    var color = d3.scaleOrdinal(d3.schemeCategory10);
-
     var simulation = d3
       .forceSimulation()
       .force(
@@ -83,6 +81,7 @@ const SpaceChart = (props: SpaceChartProps) => {
       .enter()
       .append("line")
       .attr("stroke-width", (d) => Math.sqrt(d.travel_time))
+      .attr("id", (d, i) => "linkId_" + i)
       .style("stroke", "#4AF626")
       .style("fill", "#4AF626")
       .attr("marker-end", "url(#arrowhead)");
@@ -96,7 +95,7 @@ const SpaceChart = (props: SpaceChartProps) => {
       .append("g")
       .style("fill", "white");
 
-    var circles = node.append("circle").attr("r", 4).style("fill", "#4AF626");
+    node.append("circle").attr("r", 4).style("fill", "#4AF626");
 
     // Create a drag handler and append it to the node object instead
     var drag_handler = d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
@@ -108,11 +107,19 @@ const SpaceChart = (props: SpaceChartProps) => {
       .text((d) => d.id)
       .attr("x", 6)
       .attr("y", 6);
-    link
+
+    svg
+      .selectAll(".labelText")
+      .data(links)
+      .enter()
       .append("text")
-      .text((d) => "D:" + d.travel_time)
-      .attr("dx", 6)
-      .attr("dy", 6);
+      .attr("class", "labelText")
+      .attr("dx", 50)
+      .attr("dy", -5)
+      .style("fill", "yellow")
+      .append("textPath")
+      .attr("xlink:href", (d, i) => "#linkId_" + i)
+      .text((d) => d.travel_time);
 
     simulation.nodes(nodes as any).on("tick", ticked);
 

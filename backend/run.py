@@ -3,7 +3,7 @@ import uvicorn
 from argparse import ArgumentParser
 from os import environ
 
-from app import create_app
+
 from give_me_the_odds import is_valid_json_file
 
 
@@ -27,13 +27,15 @@ if __name__ == "__main__":
 
     # Start server
     config = uvicorn.Config(
-        app=create_app,
+        app="app:create_app",
         factory=True,
         port=port,
         host="0.0.0.0",
         log_level="info",
         proxy_headers=True,
         reload=True,
+        debug=True,
+        reload_dirs=["app"],
     )
     server = uvicorn.Server(config)
     server.run()

@@ -135,29 +135,36 @@ def compute_odd(encounters: int) -> float:
 def compute_route_odd(
     plan: MillenniumFalconPlanNode,
     bounty_hunters_map: BountyHuntersMap,
-) -> float:
+) -> Tuple[float, int]:
     encounters = 0
+    route_len = 0
     while plan:
+        route_len += 1
         if plan.planet in bounty_hunters_map.get(plan.day, []):
             encounters += 1
             plan.hunted = True  # warning: side-effect
         plan = plan.parent  # type: ignore
-    return compute_odd(encounters)
+    return (compute_odd(encounters), route_len)
 
 
 def find_best_plan(
     routes: List[MillenniumFalconPlanNode],
     bounty_hunters_map: BountyHuntersMap,
 ) -> Tuple[float, Optional[MillenniumFalconPlanNode]]:
+    # Find best plan according to:
+    # - lowest odd (minimum number of encounter)
+    # - fastest route (arrive the fastest at arrival)
+
     if len(routes) == 0:
         return (0, None)
 
-    routes_with_odds: List[Tuple[float, MillenniumFalconPlanNode]] = []
+    routes_with_odds: List[Tuple[float, int, MillenniumFalconPlanNode]] = []
     for route in routes:
-        route_odd = compute_route_odd(route, bounty_hunters_map)
-        routes_with_odds.append((route_odd, route))
+        route_odd, route_len = compute_route_odd(route, bounty_hunters_map)
+        routes_with_odds.append((route_odd, route_len, route))
 
-    odd, route = max(routes_with_odds, key=lambda x: x[0])
+    # Sort by maximum route_odd and minimum route_len
+    odd, _, route = max(routes_with_odds, key=lambda x: (x[0], -x[1]))
     return (odd, route)
 
 

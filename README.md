@@ -82,7 +82,10 @@ content-type: application/json
 
 ## Run automated tests <a name="tests"></a>
 
-The server is tested with Python standard lib's Unittest package. Run the test suite with:
+The server is tested with Python standard lib's Unittest package.
+Running the test suite requires the python desp to be installed.
+
+You can run the test suite either on local or on Docker. The command is:
 
 ```sh
 cd backend # Move to the backend directory

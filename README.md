@@ -1,5 +1,23 @@
 # Give me the odds
 
+---
+### Feedback
+**Pros :**
+- Works out of the box thanks to the easy to follow doc
+- Backend testing
+- Code is easy to read and to follow thanks to adequate naming and comments
+
+**Cons :**
+- He dropped the ball on two important specification points :
+   - Being able to upload a json file
+   - Adding route in reverse direction from the DB
+- Algorithm very slow. To give an idea, when I fixed his code to add reverse direction routes, the simplest cases took ~10s
+- The UI. it's kind of difficult to input things without error
+- No error handling and no relevant logging makes it hard to understand what happens at times
+
+Correction in progress...
+---
+
 1. [Server](#server)
    1. [Run locally](#ocal)
    2. [Run on Docker](#docker)
